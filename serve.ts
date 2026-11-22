@@ -1,6 +1,7 @@
 // A tiny static server for game/ (Node 22, standard library only), so the
-// entry can be played locally without a build step: `node serve.ts` serves
-// game/ on http://localhost:8080, and --port picks another port.
+// entry can be played locally with no build step: `node serve.ts` serves
+// game/ on http://localhost:8080, and --port picks another port. Paths are
+// resolved inside game/ only, so a request can never escape the folder.
 import { createReadStream, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize, resolve, sep } from 'node:path';
@@ -46,4 +47,4 @@ createServer((request, response) => {
   } catch {
     response.writeHead(404).end('not found');
   }
-}).listen(port, () => console.log(`Solmar Bay at http://localhost:${port}`));
+}).listen(port, () => console.log(`Solmar Bay: Mara Voss Returns at http://localhost:${port}`));

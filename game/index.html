@@ -3,23 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Solmar Bay — an open-world crime game</title>
+<title>Solmar Bay: Mara Voss Returns — an open-world crime game</title>
 <style>
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #10141a; font-family: system-ui, sans-serif; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #1a1210; font-family: system-ui, sans-serif; }
   #game { display: block; width: 100vw; height: 100vh; }
   #hud { position: fixed; top: 12px; left: 12px; color: #fff; text-shadow: 0 1px 3px #000; user-select: none; pointer-events: none; }
   #cash { font-size: 26px; font-weight: 800; }
-  #health-wrap { width: 180px; height: 10px; background: #333; border: 1px solid #fff; margin-top: 6px; }
+  #health-wrap, #armour-wrap { width: 180px; height: 10px; background: rgba(0,0,0,.55); border: 1px solid #fff; margin-top: 6px; }
+  #armour-wrap { height: 6px; }
   #health { height: 100%; width: 100%; background: #2ecc71; }
+  #armour { height: 100%; width: 0%; background: #4fc3e8; }
   #stars { font-size: 22px; color: #ffd700; margin-top: 4px; letter-spacing: 2px; }
-  #mission { font-size: 14px; margin-top: 6px; max-width: 420px; }
+  #district { font-size: 15px; font-weight: 700; margin-top: 4px; letter-spacing: 1px; }
+  #mission { font-size: 14px; margin-top: 6px; max-width: 460px; line-height: 1.35; }
   #speed { font-size: 14px; margin-top: 4px; }
+  #radio { font-size: 13px; margin-top: 4px; color: #ffd27a; }
   #minimap { position: fixed; right: 12px; bottom: 12px; border: 2px solid #fff; background: #10141a; }
-  #banner { position: fixed; top: 18%; left: 50%; transform: translateX(-50%); color: #ffd700; font-size: 22px; font-weight: 800; text-shadow: 0 2px 6px #000; opacity: 0; transition: opacity .4s; text-align: center; pointer-events: none; }
-  #screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(8, 12, 20, 0.55); color: #fff; text-align: center; }
-  #screen-title { font-size: 56px; font-weight: 900; letter-spacing: 4px; color: #ffd700; margin: 0; }
-  #screen-text { font-size: 17px; max-width: 620px; margin: 16px; line-height: 1.5; }
-  #screen-hint { font-size: 14px; color: #ccc; }
+  #banner { position: fixed; top: 16%; left: 50%; transform: translateX(-50%); color: #ffd700; font-size: 24px; font-weight: 800; text-shadow: 0 2px 6px #000; opacity: 0; transition: opacity .4s; text-align: center; pointer-events: none; max-width: 84vw; background: rgba(0,0,0,.5); padding: 10px 22px; border-radius: 10px; }
+  #popups { position: fixed; top: 90px; left: 14px; pointer-events: none; }
+  .cash-pop { color: #7dff8a; font-size: 20px; font-weight: 800; text-shadow: 0 1px 3px #000; animation: rise 1.8s ease-out forwards; }
+  @keyframes rise { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-34px); } }
+  #vignette { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .2s; background: radial-gradient(ellipse at center, transparent 55%, rgba(200,0,0,.55) 100%); }
+  #screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(180deg, rgba(60,20,10,.45), rgba(8,12,20,.62)); color: #fff; text-align: center; }
+  #screen-title { font-size: 54px; font-weight: 900; letter-spacing: 3px; color: #ffd700; margin: 0; text-shadow: 0 3px 10px #000; }
+  #screen-sub { font-size: 20px; font-weight: 700; letter-spacing: 6px; color: #ff9e5e; margin: 8px 0 0; }
+  #screen-text { font-size: 17px; max-width: 640px; margin: 16px; line-height: 1.5; }
+  #screen-hint { font-size: 14px; color: #ddd; line-height: 1.7; }
   #status { position: absolute; width: 1px; height: 1px; overflow: hidden; }
 </style>
 <script type="importmap">
@@ -31,16 +40,22 @@
 <div id="hud">
   <div id="cash">$0</div>
   <div id="health-wrap"><div id="health"></div></div>
+  <div id="armour-wrap"><div id="armour"></div></div>
   <div id="stars">☆☆☆☆☆</div>
+  <div id="district">Marina Plaza</div>
   <div id="mission">Solmar Bay</div>
   <div id="speed">On foot</div>
+  <div id="radio">♪ Radio off</div>
 </div>
 <canvas id="minimap" width="180" height="180"></canvas>
 <div id="banner"></div>
+<div id="popups"></div>
+<div id="vignette"></div>
 <div id="screen">
   <h1 id="screen-title">SOLMAR BAY</h1>
-  <p id="screen-text">Mara Voss is back in Solmar Bay. Three jobs. One city.</p>
-  <p id="screen-hint">WASD move / drive &nbsp;·&nbsp; E steal or exit a car &nbsp;·&nbsp; F punch &nbsp;·&nbsp; Shift run &nbsp;·&nbsp; Mouse drag camera &nbsp;·&nbsp; P pause &nbsp;·&nbsp; Click to start</p>
+  <p id="screen-sub">MARA VOSS RETURNS</p>
+  <p id="screen-text">Mara Voss is back in Solmar Bay. Six jobs. One city. One big score.</p>
+  <p id="screen-hint">WASD move / drive &nbsp;·&nbsp; E steal or exit a car &nbsp;·&nbsp; F punch &nbsp;·&nbsp; R radio &nbsp;·&nbsp; Shift run &nbsp;·&nbsp; Mouse drag camera &nbsp;·&nbsp; P pause &nbsp;·&nbsp; Click to start</p>
 </div>
 <div id="status" aria-live="polite"></div>
 <script type="module" src="./src/main.js"></script>

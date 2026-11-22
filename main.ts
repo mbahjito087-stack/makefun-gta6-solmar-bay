@@ -1,12 +1,18 @@
-// Solmar Bay for make.fun's gta6-01 (Node 22, standard library only): the game
-// is this directory's game/ folder, plain static files a desktop browser loads
-// offline (game/index.html and its ES modules, three.js vendored as a minified
-// build under game/vendor/, no network request), and the program hands it in.
-// It copies game/ and screenshots/ from beside this file to /output and writes
-// /output/dossier.json, the summary the judge reads, with the vendored make.fun
-// library. The game itself is an original open world: Mara Voss, three story
-// jobs, traffic, pedestrians, a wanted level and police, a HUD with a minimap,
-// and a save in localStorage. Nothing in it comes from a commercial game.
+// Solmar Bay: Mara Voss Returns, for make.fun's gta6-01 (Node 22, standard
+// library only). The game is this directory's game/ folder: plain static
+// files a desktop browser loads offline — game/index.html and its ES
+// modules, three.js vendored as a minified build under game/vendor/, no
+// network request at all. This program hands it in: it copies game/ and
+// screenshots/ from beside this file to /output and writes
+// /output/dossier.json, the summary the judge reads, with the vendored
+// make.fun library.
+//
+// The game itself is an original open world: Mara Voss returns to a
+// golden-hour harbour city, works six story jobs, steals and drives cars in
+// three body styles, dodges police cruisers and a helicopter, builds a
+// wanted level, picks up health and armour, listens to two procedural radio
+// stations, and watches it all on a HUD with a live minimap — with a save
+// in localStorage. Nothing in it comes from a commercial game.
 //
 // Serve it locally with `node serve.ts`, then open http://localhost:8080.
 // Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
@@ -23,12 +29,16 @@ const out = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 mkdirSync(out, { recursive: true });
 cpSync(join(here, 'game'), join(out, 'game'), { recursive: true });
 mkdirSync(join(out, 'screenshots'), { recursive: true });
-if (existsSync(join(here, 'screenshots'))) cpSync(join(here, 'screenshots'), join(out, 'screenshots'), { recursive: true });
+if (existsSync(join(here, 'screenshots'))) {
+  cpSync(join(here, 'screenshots'), join(out, 'screenshots'), { recursive: true });
+}
 
-// The scorer's own caps (reference/gate.json): only text_max_bytes shapes the bytes; the others refuse an entry the
-// scorer would refuse (more than 4 screenshots or one over 256 KiB; more than 993 files in game/ or 48 MiB of game
-// files, in all, or a path under game/ over 1000 bytes: game/ counts beside /output's own 1000-entry cap, its
-// screenshots/ and dossier.json).
+// The sealed scorer's own caps (reference/gate.json): only text_max_bytes
+// shapes the dossier bytes; the rest refuse an entry the scorer would
+// refuse — more than 4 screenshots or one over 256 KiB, more than 993
+// files in game/ or 48 MiB of game files in all, or a path under game/
+// over 1000 bytes. game/ counts beside /output's own 1000-entry cap, its
+// screenshots/ and dossier.json.
 writeFileSync(
   join(out, 'dossier.json'),
   buildDossier(out, {

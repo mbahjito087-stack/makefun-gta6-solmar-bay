@@ -91,6 +91,23 @@ function makeTree(random) {
   return tree;
 }
 
+// A low stone bench for the plaza, so the spawn square feels lived in.
+function makeBench() {
+  const bench = new THREE.Group();
+  const seat = new THREE.Mesh(
+    new THREE.BoxGeometry(3, 0.4, 1),
+    new THREE.MeshLambertMaterial({ color: 0x8a7a5e }),
+  );
+  seat.position.y = 0.6;
+  const back = new THREE.Mesh(
+    new THREE.BoxGeometry(3, 1, 0.25),
+    new THREE.MeshLambertMaterial({ color: 0x8a7a5e }),
+  );
+  back.position.set(0, 1.1, -0.45);
+  bench.add(seat, back);
+  return bench;
+}
+
 export function createCity(random) {
   const group = new THREE.Group();
   const colliders = [];
@@ -223,7 +240,7 @@ export function createCity(random) {
     }
   }
 
-  // Marina Plaza: fountain ringed by palms at the spawn.
+  // Marina Plaza: fountain ringed by palms at the spawn, with benches.
   const fountain = new THREE.Mesh(
     new THREE.CylinderGeometry(7, 8, 1.2, 16),
     new THREE.MeshLambertMaterial({ color: 0x4a90c2 }),
@@ -236,6 +253,12 @@ export function createCity(random) {
     const palm = makePalm(random);
     palm.position.set(Math.cos(a) * 16, 0, Math.sin(a) * 16);
     group.add(palm);
+  }
+  for (const [bx, bz, ry] of [[-12, -12, 0.6], [12, -12, -0.6], [-12, 12, 2.4], [12, 12, -2.4]]) {
+    const bench = makeBench();
+    bench.position.set(bx, 0, bz);
+    bench.rotation.y = ry;
+    group.add(bench);
   }
 
   // The beach strip, then the harbour water along the south edge.

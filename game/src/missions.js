@@ -80,6 +80,10 @@ export function missionTarget(missions) {
   return MISSIONS[missions.index].target;
 }
 
+export function missionName(missions) {
+  return missions.done ? 'All jobs done' : MISSIONS[missions.index].name;
+}
+
 // Advance the current job. Returns an event object, or null. `wanted` is
 // the current star count; `dt` ticks the timed job's clock.
 export function updateMissions(missions, playerPos, wanted, dt) {

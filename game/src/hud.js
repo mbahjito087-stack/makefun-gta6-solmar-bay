@@ -1,7 +1,13 @@
 // The HUD: cash, health and armour bars, wanted stars, district name,
 // mission tracker with distance and timer, speed, radio station, and a
 // live top-down minimap drawn on a 2D canvas from the same world positions.
-import { MAX_WANTED, WORLD_HALF } from './config.js';
+import { MAX_WANTED, WORLD_HALF, DISTRICTS } from './config.js';
+
+const DISTRICT_COLORS = Object.fromEntries(DISTRICTS.map((d) => [d.name, d.color]));
+
+export function districtColor(name) {
+  return DISTRICT_COLORS[name] ?? '#ffffff';
+}
 
 export function createHud() {
   const el = (id) => document.getElementById(id);

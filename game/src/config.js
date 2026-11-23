@@ -1,6 +1,6 @@
-// Solmar Bay: Mara Voss Returns — every tuning number lives in this file,
-// so balancing the game is a single edit. The city is a 360 m square of
-// streets split into four districts: Marina Plaza at the centre, North
+// Solmar Bay: Mara Voss Returns — every tuning number lives in this one
+// file, so balancing the game is a single edit. The city is a 360 m square
+// of streets split into four districts: Marina Plaza at the centre, North
 // Market to the north, Neon Row to the east, and the Harbour beach along
 // the south edge by the water.
 export const WORLD_HALF = 180;
@@ -41,6 +41,8 @@ export const MISSION_REWARDS = [150, 250, 350, 300, 400, 500];
 export const TIMED_JOB_SECONDS = 75;
 
 // Pickups scattered around the city: green health crosses and blue armour.
+export const PICKUP_HEALTH_COUNT = 4;
+export const PICKUP_ARMOUR_COUNT = 2;
 export const PICKUP_RESPAWN_SECONDS = 45;
 export const HEALTH_PICKUP_AMOUNT = 25;
 export const ARMOUR_PICKUP_AMOUNT = 50;
@@ -52,6 +54,9 @@ export const DISTRICTS = [
   { name: 'Neon Row', color: '#ff5fa2' },
   { name: 'Harbour', color: '#4fc3e8' },
 ];
+
+// The seed the staged screenshots use, so every shot is reproducible.
+export const SHOT_SEED = 7;
 
 export const BEST_KEY = 'solmar-bay-returns-best-cash';
 export const SAVE_KEY = 'solmar-bay-returns-save-v1';

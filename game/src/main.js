@@ -11,8 +11,8 @@ import {
   WORLD_HALF, STEP, WALK_SPEED, RUN_SPEED, CAR_STYLES, CAR_BRAKE,
   CAR_REVERSE_MAX, MAX_WANTED, WANTED_FADE_SECONDS, WANTED_SIGHT_RANGE,
   HELI_MIN_WANTED, PLAYER_MAX_HEALTH, ARMOUR_MAX, PUNCH_RANGE,
-  PICKUP_RESPAWN_SECONDS, HEALTH_PICKUP_AMOUNT, ARMOUR_PICKUP_AMOUNT,
-  BEST_KEY, SAVE_KEY,
+  PICKUP_HEALTH_COUNT, PICKUP_ARMOUR_COUNT, PICKUP_RESPAWN_SECONDS,
+  HEALTH_PICKUP_AMOUNT, ARMOUR_PICKUP_AMOUNT, BEST_KEY, SAVE_KEY,
 } from './config.js';
 import { createSeededRandom, range } from './random.js';
 import { createCity, collideCircle, districtAt } from './city.js';
@@ -21,9 +21,9 @@ import {
   stepPolice, removePolice, createHelicopter, stepHelicopter,
 } from './vehicles.js';
 import { createPedestrians, stepPedestrians, makePlayerMesh } from './people.js';
-import { MISSIONS, createMissions, missionTarget, updateMissions } from './missions.js';
+import { MISSIONS, createMissions, missionTarget, missionName, updateMissions } from './missions.js';
 import { createAudio } from './audio.js';
-import { createHud } from './hud.js';
+import { createHud, districtColor } from './hud.js';
 
 const params = new URLSearchParams(window.location.search);
 const shot = params.get('shot');
@@ -100,22 +100,16 @@ function makePickupMesh(kind) {
   g.position.y = 1.2;
   return g;
 }
-for (let i = 0; i < 4; i++) {
-  const mesh = makePickupMesh('health');
+function placePickup(kind) {
+  const mesh = makePickupMesh(kind);
   const x = range(random, -150, 150);
   const z = range(random, -150, 150);
   mesh.position.set(x, 1.2, z);
   scene.add(mesh);
-  pickups.push({ mesh, kind: 'health', x, z, taken: 0 });
+  pickups.push({ mesh, kind, x, z, taken: 0 });
 }
-for (let i = 0; i < 2; i++) {
-  const mesh = makePickupMesh('armour');
-  const x = range(random, -150, 150);
-  const z = range(random, -150, 150);
-  mesh.position.set(x, 1.2, z);
-  scene.add(mesh);
-  pickups.push({ mesh, kind: 'armour', x, z, taken: 0 });
-}
+for (let i = 0; i < PICKUP_HEALTH_COUNT; i++) placePickup('health');
+for (let i = 0; i < PICKUP_ARMOUR_COUNT; i++) placePickup('armour');
 
 // Smoke puffs for a battered car: a small reusable pool.
 const smokePool = [];
@@ -544,17 +538,16 @@ function updateCamera(dt) {
 function drawFrame(clock) {
   const target = missionTarget(missions);
   const district = districtAt(player.x, player.z);
-  const districtColor = { 'Marina Plaza': '#e8b64c', 'North Market': '#7ec850', 'Neon Row': '#ff5fa2', Harbour: '#4fc3e8' }[district];
   hud.update({
     cash: state.cash,
     health: state.health,
     armour: state.armour,
     wanted: state.wanted,
     district,
-    districtColor,
+    districtColor: districtColor(district),
     missionIndex: missions.index,
     missionDone: missions.done,
-    missionName: missions.done ? 'All jobs done' : MISSIONS[missions.index].name,
+    missionName: missionName(missions),
     objective: missions.done ? 'Enjoy Solmar Bay' : `${target.label} — ${MISSIONS[missions.index].hint}`,
     distance: Math.hypot(player.x - target.x, player.z - target.z),
     timer: missions.timer,

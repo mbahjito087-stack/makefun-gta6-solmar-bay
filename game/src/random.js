@@ -1,7 +1,9 @@
 // A small seeded generator (mulberry32) and the helpers the city builder,
 // traffic and pedestrians draw from. Nothing in the game rolls an unseeded
 // die: the same ?seed= rebuilds the same city, the same traffic and the
-// same staged screenshots, run after run.
+// same staged screenshots, run after run. Every call site that needs a
+// random value takes the stream in as an argument, so no module keeps a
+// hidden global roll.
 export function createSeededRandom(seed) {
   let a = seed >>> 0;
   return function random() {

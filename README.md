@@ -41,9 +41,10 @@ WASD move / drive · E steal or exit a car · F punch · R switch radio · Shift
 
 ## Verification
 
-- Playtest (`node work/playtest.mjs`): walk, steal, drive, punch, pause — 0 console/page errors. Verified 2026-11-22 in the recorded session: stolen: true, drove 70–144 km/h, mission tracker showed "Job 1/6" with live distance, 2 wanted stars, PAUSED screen reached. PLAYTEST OK.
-- Screenshots: 4 staged shots at 1280×800, seed 7, each ≤256 KiB, re-taken in the recorded session and eyeballed: title over the golden-hour plaza, harbour drive with traffic and mission objective, Neon Row chase at 4 stars with cruisers and the helicopter searchlight, and the finale with $1,950 and the CLEAN GETAWAY banner.
-- Determinism: two `main.ts` runs produce byte-identical `/output` (verified 2026-11-22, 1,240,411 bytes total, dossier 317,546 bytes).
+- Playtest (`node work/playtest.mjs`): walk, steal, drive, punch, pause — 0 console/page errors. Verified 2026-11-23 in the recorded session: stolen: true, drove 70 km/h in a Bison sports car, mission tracker showed "Job 1/6 · Job 1: The Pickup — North Market · 217m", 2 wanted stars, PAUSED screen reached. PLAYTEST OK.
+- Screenshots: 4 staged shots at 1280×800, seed 7, each ≤256 KiB (68,538 / 46,897 / 50,609 / 63,886 bytes), re-taken 2026-11-23 in the recorded session and eyeballed: title over the golden-hour plaza, harbour drive with traffic and mission objective, Neon Row chase at 4 stars with cruisers and the helicopter, and the finale with $1,950 and the CLEAN GETAWAY banner.
+- Determinism: two `main.ts` runs produce byte-identical `/output` (verified 2026-11-23, 1,347,366 bytes total, dossier 378,372 bytes).
+- Kit check (`node cli/makefun.mjs check --kit . --repo <repo> --worktree`, 2026-11-23): 4 passed, 0 failed, 17 skipped, 5 at submission (transcript/recording rows are checked at submission).
 
 ---
 

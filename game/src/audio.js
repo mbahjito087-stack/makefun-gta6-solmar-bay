@@ -4,7 +4,7 @@
 // station), each station a looping step sequencer built from oscillators.
 const NOTE = (midi) => 440 * Math.pow(2, (midi - 69) / 12);
 
-// 16-step patterns. 0 means rest. Bass roots in MIDI, pads as chord roots.
+// 16-step patterns. 0 means rest. Bass roots in MIDI, leads as melody notes.
 const STATIONS = [
   {
     name: 'SOLMAR FM · Synthwave',
@@ -33,6 +33,8 @@ export function createAudio() {
   let radioIndex = 0;
   let radioOn = false;
 
+  // The AudioContext only exists after the first user gesture; every
+  // method guards on it, so the game never throws before the click.
   function ensure() {
     if (ctx) return true;
     try {
@@ -128,6 +130,7 @@ export function createAudio() {
         sirenOsc = null;
       }
     },
+    // Cycles station 1 -> station 2 -> off. Returns the name to show.
     toggleRadio() {
       if (!radioOn) {
         startRadio();

@@ -2,6 +2,8 @@
 // entry can be played locally with no build step: `node serve.ts` serves
 // game/ on http://localhost:8080, and --port picks another port. Paths are
 // resolved inside game/ only, so a request can never escape the folder.
+// It serves exactly the files the game needs — html, js, json and images —
+// and answers anything else with a generic binary type or a 404.
 import { createReadStream, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize, resolve, sep } from 'node:path';

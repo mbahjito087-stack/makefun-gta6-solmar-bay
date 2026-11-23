@@ -38,7 +38,8 @@ if (existsSync(join(here, 'screenshots'))) {
 // refuse — more than 4 screenshots or one over 256 KiB, more than 993
 // files in game/ or 48 MiB of game files in all, or a path under game/
 // over 1000 bytes. game/ counts beside /output's own 1000-entry cap, its
-// screenshots/ and dossier.json.
+// screenshots/ and dossier.json. Nothing here needs the network: the only
+// files read are the ones beside this program.
 writeFileSync(
   join(out, 'dossier.json'),
   buildDossier(out, {

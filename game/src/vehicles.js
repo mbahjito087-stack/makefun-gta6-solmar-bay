@@ -2,7 +2,10 @@
 // police cruisers that chase the player, and — at four stars and up — a
 // police helicopter circling overhead with a searchlight.
 import * as THREE from 'three';
-import { WORLD_HALF, BLOCK_SIZE, CAR_STYLES, MAX_WANTED } from './config.js';
+import {
+  WORLD_HALF, BLOCK_SIZE, CAR_STYLES, MAX_WANTED,
+  TRAFFIC_CARS, PARKED_CARS,
+} from './config.js';
 import { choice, range } from './random.js';
 import { collideCircle, streetAt } from './city.js';
 
@@ -66,7 +69,7 @@ export function makeCarMesh(color, style, police) {
 
 export function createTraffic(random, scene, colliders, streets) {
   const cars = [];
-  for (let i = 0; i < 16; i++) {
+  for (let i = 0; i < TRAFFIC_CARS; i++) {
     const alongX = random() < 0.5;
     const street = choice(random, streets);
     const style = choice(random, STYLES);
@@ -95,7 +98,7 @@ export function createTraffic(random, scene, colliders, streets) {
   // Parked cars the player can steal, lined up on Marina Plaza right by
   // the spawn, so the first steal is a few steps away, not a hike.
   const parked = [];
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < PARKED_CARS; i++) {
     const style = choice(random, STYLES);
     const mesh = makeCarMesh(choice(random, PAINTS), style, false);
     const x = -14 + i * 7;
@@ -151,7 +154,8 @@ export function placePolice(police, x, z) {
 
 // Chase the target. Returns 'ram' when a cruiser hits the player, 'bust'
 // when one reaches the player on foot at three stars or more, else null.
-// The lightbar alternates on the game clock, so screenshots stay fixed.
+// The lightbar alternates on the game clock (a fixed-step value), never on
+// performance.now(), so staged screenshots stay identical every run.
 export function stepPolice(police, target, dt, colliders, clock, onFoot, wanted) {
   let result = null;
   const phase = Math.floor(clock / 0.25) % 2 === 0;

@@ -48,8 +48,9 @@ export function createPedestrians(random, scene) {
 }
 
 // Stroll, turn at the city edge, drift now and then — all from the seeded
-// stream. `threats` are danger points (a speeding car, a punch): peds
-// inside a threat's radius run away from it for a couple of seconds.
+// stream, never Math.random(). `threats` are danger points (a speeding car,
+// a punch): peds inside a threat's radius run away from it for a couple of
+// seconds, so a fast car through a crowd scatters it.
 export function stepPedestrians(peds, dt, random, threats) {
   for (const p of peds) {
     if (p.down > 0) {
@@ -74,6 +75,7 @@ export function stepPedestrians(peds, dt, random, threats) {
     p.x += Math.cos(p.angle) * speed * dt;
     p.z += Math.sin(p.angle) * speed * dt;
     if (Math.abs(p.x) > WORLD_HALF - 5 || Math.abs(p.z) > WORLD_HALF - 5) p.angle += Math.PI / 2;
+    // A rare idle drift: a pedestrian changes direction now and then.
     if (random() < 0.002) p.angle += (random() - 0.5) * 2;
     p.mesh.position.set(p.x, 0, p.z);
     p.mesh.rotation.y = -p.angle + Math.PI / 2;

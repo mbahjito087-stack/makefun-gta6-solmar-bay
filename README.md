@@ -5,78 +5,76 @@
 [![reward](https://make.fun/badge/gta6-01/mbahjito087-stack/makefun-gta6-solmar-bay/reward.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
 
 An open-world crime game in the spirit of GTA 6, built for the
-[make.fun](https://make.fun/bounty/gta6-01) "Make GTA 6" bounty.
-Mara Voss is back in Solmar Bay: steal cars, outrun the Solmar Bay PD,
-run six story jobs and take the Big Score — $1,950 on the line.
+[make.fun bounty gta6-01](https://make.fun/bounty/gta6-01).
+Mara Voss is back in Solmar Bay — steal cars, outrun the police, work your
+way through six story jobs, and pull off The Big Score for $1,950.
 
-> Referral: https://make.fun/r/2behakk4
+If you like the game, you can join the bounty yourself with my referral link:
+https://make.fun/r/2behakk4
 
-## Play
+## Play it
 
 ```sh
 node serve.ts
 ```
 
-Then open http://localhost:8080. Everything runs offline from `game/` —
-no network request, no build step. Three.js is vendored under
-`game/vendor/`.
+Then open http://localhost:8080 in your browser. The game runs fully offline:
+everything lives under `game/`, and Three.js is vendored in `game/vendor/`,
+so no network request is needed once the page loads.
 
 ## Controls
 
 | Key | Action |
 | --- | --- |
-| WASD / arrows | Move on foot, drive in a car |
+| W A S D / arrow keys | Walk, or drive when in a car |
 | Shift | Run |
-| E | Steal nearest car / exit car |
+| E | Steal a car / get out of a car |
 | F | Punch |
-| R | Toggle procedural radio (2 stations) |
+| R | Switch radio station (2 procedural stations) |
 | P | Pause |
-| Mouse drag / wheel | Orbit camera / zoom |
+| Mouse drag / wheel | Orbit and zoom the camera |
 
-## Features
+## The city
 
-- **Open world**: four districts — Marina Plaza, North Market, Harbour,
-  Neon Row — each with its own palette, signage and minimap tint.
-- **Golden-hour art direction**: low warm sun, orange-pink sky, long
-  shadows, lit windows, shimmering harbour water, palms, beach, neon.
-- **Traffic & pedestrians**: 14 traffic cars (sedan / van / sports),
-  18 pedestrians who stroll, cross at crosswalks and flee trouble,
-  4 parked cars to steal.
-- **Wanted 0–5 stars**: stealing, punching and ramming raise the heat.
-  Police cruisers chase and ram; at 4–5 stars a helicopter circles with
-  a searchlight and roadblocks wait ahead. Get busted on foot at 3+.
-- **Six story jobs** ($150 → $300 → $600 → $350 → $250 → $300):
-  Pickup, Getaway, Vault Run, Harbour Smuggle (timed), Neon Row Rescue,
-  The Big Score — with a gold beacon and a HUD mission tracker.
-- **Side content**: 10 hidden packages ($50 each), taxi fares ($80),
-  health (+25) and armour (+50) pickups, car damage smoke.
-- **HUD**: cash, health, armour, wanted stars, mission tracker with
-  distance, speedometer, live minimap with district tints and north
-  indicator, cash popups, damage vignette, district label.
-- **Sound**: procedural WebAudio — engine, siren, chimes, thuds and two
-  radio stations (synthwave + harbour chill), all synthesized live.
-- **Screens & save**: title / pause / wasted / busted / win screens,
-  localStorage save with best cash.
-- **Deterministic**: every roll comes from a seeded RNG (`?seed=`); the
-  same seed always builds the same city.
+Solmar Bay has four districts, each with its own palette and its own tint
+on the minimap: **Marina Plaza**, **North Market**, **Harbour**, and
+**Neon Row**. The whole city is lit in golden hour — a low sun, an
+orange-pink sky, glowing windows, and shimmering harbour water.
 
-## Shots
+- **Traffic & people:** 14 cars on the road (sedan, van, and sports bodies),
+  18 pedestrians on the sidewalks, and 4 parked cars to steal.
+- **Wanted system:** 0–5 stars. Stealing, hitting, and ramming raise your
+  heat. Police cruisers give chase and ram you back; at 4–5 stars a
+  helicopter joins the hunt and roadblocks appear ahead of you. Get caught
+  on foot at 3+ stars and you're BUSTED.
+- **Story jobs:** six missions with a golden beacon and a mission tracker
+  — Pickup, Getaway, Vault Run, the timed Harbour Smuggle, Neon Row Rescue,
+  and The Big Score finale — worth $1,950 in total.
+- **Side content:** 10 hidden packages ($50 each), taxi fares ($80 a ride),
+  health pickups (+25) and armour pickups (+50), and smoke pouring from a
+  badly damaged car.
+- **HUD:** cash, health, armour, wanted stars, mission tracker with
+  distance, speedometer, a live minimap with a north indicator, floating
+  cash popups, and a damage vignette.
+- **Audio:** fully procedural WebAudio — engine hum, police sirens, chimes,
+  thuds, and two radio stations, all synthesized with oscillators.
+- **Screens & saves:** title, pause, wasted, busted, and win screens;
+  progress and best cash are saved in localStorage.
+- **Deterministic:** a seeded RNG drives the world, so `?seed=` replays the
+  same city every time.
 
-Four staged screenshots live in `screenshots/` (see `shots.json`):
-title over the marina skyline, harbour drive, night neon chase at
-wanted 4, and the CLEAN GETAWAY finale.
+## Screenshots
 
-## Verify
+Four staged shots live in `screenshots/` (see `shots.json` for the staging
+queries):
 
-```sh
-node work/playtest.mjs <repo> <port>   # walk, steal, drive, punch, pause
-node work/shoot.mjs <repo> <port>      # regenerate the 4 screenshots
-mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts   # deterministic build
-```
-
-Playtest: OK, 0 console/page errors. Determinism: two `main.ts` runs
-byte-identical (see commit message for sizes).
+1. `1-start.jpg` — title over the golden-hour marina skyline
+2. `2-drive.jpg` — driving through the harbour with traffic and the mission
+   objective in view
+3. `3-chase.jpg` — a neon chase at wanted level 4, cruisers and helicopter
+   in frame
+4. `4-win.jpg` — the finale complete, cash total and a "CLEAN GETAWAY" banner
 
 ## License
 
-MIT — see `LICENSE`.
+MIT — see [LICENSE](LICENSE).

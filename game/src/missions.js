@@ -1,119 +1,170 @@
-// Mara Voss's story in six jobs, told by Dario on the phone. A job pays
-// when Mara reaches its gold beacon — except the getaway, which only pays
-// once the wanted level is clean, and the smuggle, which pays only inside
-// its timer. The finale raises the heat the moment it starts.
-import * as THREE from 'three';
-import { MISSION_REWARDS, TIMED_JOB_SECONDS } from './config.js';
+// Missions: the six-job story arc, the gold beacon, hidden packages and
+// the taxi side gig. Pure logic — the main loop owns the meshes and the HUD.
 
-export const MISSIONS = [
-  {
-    name: 'Job 1: The Pickup',
-    brief: 'Dario needs a package from the north market. Get there on foot or by car.',
-    target: { x: -120, z: -120, label: 'North Market' },
-    hint: 'Follow the gold beacon. Press E near a parked car to drive it.',
-    kind: 'reach',
-  },
-  {
-    name: 'Job 2: The Getaway',
-    brief: 'The package is hot and the Solmar police are coming. Lose them, then reach the hideout.',
-    target: { x: 120, z: 120, label: 'Hideout' },
-    hint: 'Stars fade when no cruiser can see you. Reach the beacon only when clean.',
-    kind: 'escape',
-  },
-  {
-    name: 'Job 3: The Vault Run',
-    brief: 'One last easy one, she says: lift the gold Comet from the harbour garage and bring it to the chop shop.',
-    target: { x: 120, z: -120, label: 'Chop Shop' },
-    hint: 'Steal a car with E, then drive it to the gold beacon.',
-    kind: 'reach',
-  },
-  {
-    name: 'Job 4: Harbour Smuggle',
-    brief: 'A crate of harbour goods has to cross town before the tide turns. Seventy-five seconds, no excuses.',
-    target: { x: -120, z: 120, label: 'Harbour Drop' },
-    hint: 'Timed delivery — watch the clock. Drive fast, cut corners.',
-    kind: 'timed',
-  },
-  {
-    name: 'Job 5: Neon Row Rescue',
-    brief: 'Dario’s kid brother got cornered on Neon Row. Get him out — the crew there does not ask twice.',
-    target: { x: 150, z: -60, label: 'Neon Row' },
-    hint: 'Reach the beacon on Neon Row. Expect company.',
-    kind: 'reach',
-  },
-  {
-    name: 'Job 6: The Big Score',
-    brief: 'The casino vault on Marina Plaza. Take it all, then vanish. The whole city will be on you.',
-    target: { x: 0, z: -150, label: 'Marina Vault' },
-    hint: 'The finale: grab the score and reach the vault beacon.',
-    kind: 'finale',
-  },
-];
+import { MISSIONS, PACKAGE_COUNT, PACKAGE_VALUE, TAXI_FARE } from './config.js';
 
-export function createMissions(scene) {
-  const beacon = new THREE.Group();
-  const beam = new THREE.Mesh(
-    new THREE.CylinderGeometry(2.5, 2.5, 60, 12, 1, true),
-    new THREE.MeshBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0.35, side: THREE.DoubleSide }),
-  );
-  beam.position.y = 30;
-  const ring = new THREE.Mesh(
-    new THREE.RingGeometry(3, 4.5, 24),
-    new THREE.MeshBasicMaterial({ color: 0xffd700, side: THREE.DoubleSide }),
-  );
-  ring.rotation.x = -Math.PI / 2;
-  ring.position.y = 0.2;
-  beacon.add(beam, ring);
-  scene.add(beacon);
-  return {
-    index: 0,
-    beacon,
-    done: false,
-    earned: 0,
-    timer: 0,
-    warned: false,
-    blockedNote: 0,
-  };
-}
+export class MissionRunner {
+  constructor(rng) {
+    this.rng = rng;
+    this.index = 0;
+    this.step = 0;
+    this.timerLeft = 0;
+    this.done = false;
+    this.beacon = null;
+    this.packagesFound = 0;
+    this.taxi = null;
+    this.refreshBeacon();
+  }
 
-export function missionTarget(missions) {
-  return MISSIONS[missions.index].target;
-}
+  current() {
+    return MISSIONS[this.index];
+  }
 
-export function missionName(missions) {
-  return missions.done ? 'All jobs done' : MISSIONS[missions.index].name;
-}
+  stepTarget() {
+    const job = this.current();
+    if (!job) return null;
+    return job.steps[this.step];
+  }
 
-// Advance the current job. Returns an event object, or null. `wanted` is
-// the current star count; `dt` ticks the timed job's clock.
-export function updateMissions(missions, playerPos, wanted, dt) {
-  const job = MISSIONS[missions.index];
-  const t = job.target;
-  missions.beacon.position.set(t.x, 0, t.z);
-  missions.beacon.rotation.y += 0.02;
-  if (job.kind === 'timed') {
-    if (missions.timer <= 0) missions.timer = TIMED_JOB_SECONDS;
-    missions.timer -= dt;
-    if (missions.timer <= 0) {
-      missions.timer = TIMED_JOB_SECONDS;
-      return { failed: true, name: job.name };
+  refreshBeacon() {
+    const target = this.stepTarget();
+    this.beacon = target ? { x: target.x, z: target.z } : null;
+  }
+
+  startJob() {
+    const job = this.current();
+    if (!job) return null;
+    if (job.wantedAtStart) this.pendingWanted = job.wantedAtStart;
+    if (job.timed) this.timerLeft = job.timed;
+    this.refreshBeacon();
+    return job;
+  }
+
+  // Returns events for the main loop: step, complete, jobDone, timedOut.
+  update(dt, playerX, playerZ) {
+    const events = [];
+    if (this.done) return events;
+    const job = this.current();
+    if (!job) return events;
+    if (job.timed && this.timerLeft > 0) {
+      this.timerLeft -= dt;
+      if (this.timerLeft <= 0) {
+        this.timerLeft = 0;
+        events.push({ type: 'timedOut', job });
+        this.advanceJob(events);
+        return events;
+      }
+    }
+    const target = this.stepTarget();
+    if (target && Math.hypot(target.x - playerX, target.z - playerZ) < 6) {
+      this.step++;
+      if (this.step >= job.steps.length) {
+        events.push({ type: 'jobDone', job });
+        if (job.wantedOnComplete) events.push({ type: 'wanted', stars: job.wantedOnComplete });
+        this.advanceJob(events);
+      } else {
+        events.push({ type: 'step', job, step: this.step });
+        this.refreshBeacon();
+      }
+    }
+    return events;
+  }
+
+  advanceJob(events) {
+    this.index++;
+    this.step = 0;
+    this.timerLeft = 0;
+    if (this.index >= MISSIONS.length) {
+      this.done = true;
+      this.beacon = null;
+      events.push({ type: 'allDone' });
+    } else {
+      const next = this.startJob();
+      events.push({ type: 'jobStart', job: next });
     }
   }
-  const d = Math.hypot(playerPos.x - t.x, playerPos.z - t.z);
-  if (d >= 6) return null;
-  // The getaway only counts once the heat is gone.
-  if (job.kind === 'escape' && wanted > 0) {
-    missions.blockedNote += dt;
-    return { blocked: true };
+
+  missionText() {
+    if (this.done) return '';
+    const target = this.stepTarget();
+    return target ? target.text : '';
   }
-  const pay = MISSION_REWARDS[missions.index];
-  missions.earned += pay;
-  missions.timer = 0;
-  missions.index += 1;
-  if (missions.index >= MISSIONS.length) {
-    missions.done = true;
-    missions.beacon.visible = false;
-    return { paid: pay, finished: true };
+
+  missionDistance(playerX, playerZ) {
+    if (!this.beacon) return 0;
+    return Math.hypot(this.beacon.x - playerX, this.beacon.z - playerZ);
   }
-  return { paid: pay, finished: false, next: MISSIONS[missions.index].name };
 }
+
+// Ten glowing crates hidden around the city, placed by seeded RNG.
+export function placePackages(rng) {
+  const spots = [];
+  const used = new Set();
+  while (spots.length < PACKAGE_COUNT) {
+    const x = Math.round(rng.range(-110, 105));
+    const z = Math.round(rng.range(-110, 110));
+    const key = x + ',' + z;
+    if (used.has(key)) continue;
+    if (Math.abs(x - 14) < 12 && Math.abs(z - 14) < 12) continue;
+    used.add(key);
+    spots.push({ x, z, taken: false });
+  }
+  return spots;
+}
+
+// A waving ped flags a taxi: pick them up, deliver, get paid. One fare at
+// a time, 60 seconds on the meter.
+export class TaxiJob {
+  constructor(rng) {
+    this.rng = rng;
+    this.active = false;
+    this.pickup = null;
+    this.dropoff = null;
+    this.timerLeft = 0;
+    this.cooldown = 8;
+    this.pickupX = 0;
+    this.pickupZ = 0;
+  }
+
+  update(dt, playerX, playerZ, inCar) {
+    const events = [];
+    this.cooldown -= dt;
+    if (!this.active) {
+      if (this.cooldown <= 0 && inCar) {
+        this.active = true;
+        this.pickupX = Math.round(this.rng.range(-90, 90));
+        this.pickupZ = Math.round(this.rng.range(-90, 90));
+        this.pickup = { x: this.pickupX, z: this.pickupZ };
+        this.timerLeft = 0;
+        events.push({ type: 'taxiOffer', x: this.pickupX, z: this.pickupZ });
+      }
+      return events;
+    }
+    if (!this.pickup) {
+      // Passenger aboard: drive to the dropoff before the meter runs out.
+      this.timerLeft -= dt;
+      if (this.timerLeft <= 0) {
+        this.active = false;
+        this.cooldown = 20;
+        events.push({ type: 'taxiFail' });
+      } else if (Math.hypot(this.dropoff.x - playerX, this.dropoff.z - playerZ) < 7) {
+        this.active = false;
+        this.cooldown = 25;
+        events.push({ type: 'taxiPaid', fare: TAXI_FARE });
+      }
+      return events;
+    }
+    if (inCar && Math.hypot(this.pickup.x - playerX, this.pickup.z - playerZ) < 6) {
+      this.pickup = null;
+      this.dropoff = {
+        x: Math.round(this.rng.range(-100, 100)),
+        z: Math.round(this.rng.range(-100, 100)),
+      };
+      this.timerLeft = 60;
+      events.push({ type: 'taxiPickup', x: this.dropoff.x, z: this.dropoff.z });
+    }
+    return events;
+  }
+}
+
+export { PACKAGE_VALUE };

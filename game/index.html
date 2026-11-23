@@ -1,64 +1,86 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Solmar Bay: Mara Voss Returns — an original open-world crime game in a golden-hour harbour city. Six story jobs, car chases, a wanted level and a live minimap.">
-<title>Solmar Bay: Mara Voss Returns — an open-world crime game</title>
+<title>Solmar Bay — Mara Voss Returns</title>
 <style>
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #1a1210; font-family: system-ui, sans-serif; }
-  #game { display: block; width: 100vw; height: 100vh; }
-  #hud { position: fixed; top: 12px; left: 12px; color: #fff; text-shadow: 0 1px 3px #000; user-select: none; pointer-events: none; }
-  #cash { font-size: 26px; font-weight: 800; }
-  #health-wrap, #armour-wrap { width: 180px; height: 10px; background: rgba(0,0,0,.55); border: 1px solid #fff; margin-top: 6px; }
-  #armour-wrap { height: 6px; }
-  #health { height: 100%; width: 100%; background: #2ecc71; }
-  #armour { height: 100%; width: 0%; background: #4fc3e8; }
-  #stars { font-size: 22px; color: #ffd700; margin-top: 4px; letter-spacing: 2px; }
-  #district { font-size: 15px; font-weight: 700; margin-top: 4px; letter-spacing: 1px; }
-  #mission { font-size: 14px; margin-top: 6px; max-width: 460px; line-height: 1.35; }
-  #speed { font-size: 14px; margin-top: 4px; }
-  #radio { font-size: 13px; margin-top: 4px; color: #ffd27a; }
-  #minimap { position: fixed; right: 12px; bottom: 12px; border: 2px solid #fff; background: #10141a; }
-  #banner { position: fixed; top: 16%; left: 50%; transform: translateX(-50%); color: #ffd700; font-size: 24px; font-weight: 800; text-shadow: 0 2px 6px #000; opacity: 0; transition: opacity .4s; text-align: center; pointer-events: none; max-width: 84vw; background: rgba(0,0,0,.5); padding: 10px 22px; border-radius: 10px; }
-  #popups { position: fixed; top: 90px; left: 14px; pointer-events: none; }
-  .cash-pop { color: #7dff8a; font-size: 20px; font-weight: 800; text-shadow: 0 1px 3px #000; animation: rise 1.8s ease-out forwards; }
-  @keyframes rise { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-34px); } }
-  #vignette { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .2s; background: radial-gradient(ellipse at center, transparent 55%, rgba(200,0,0,.55) 100%); }
-  #screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(180deg, rgba(60,20,10,.45), rgba(8,12,20,.62)); color: #fff; text-align: center; }
-  #screen-title { font-size: 54px; font-weight: 900; letter-spacing: 3px; color: #ffd700; margin: 0; text-shadow: 0 3px 10px #000; }
-  #screen-sub { font-size: 20px; font-weight: 700; letter-spacing: 6px; color: #ff9e5e; margin: 8px 0 0; }
-  #screen-text { font-size: 17px; max-width: 640px; margin: 16px; line-height: 1.5; }
-  #screen-hint { font-size: 14px; color: #ddd; line-height: 1.7; }
-  #status { position: absolute; width: 1px; height: 1px; overflow: hidden; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #14101c;
+    font-family: 'Segoe UI', system-ui, sans-serif; color: #fff; }
+  #game { position: fixed; inset: 0; }
+  #game canvas { display: block; }
+  .hud { position: fixed; z-index: 5; pointer-events: none;
+    text-shadow: 0 2px 4px rgba(0,0,0,.8); }
+  #top-left { top: 14px; left: 16px; }
+  #cash { font-size: 30px; font-weight: 800; color: #7dff8a; letter-spacing: 1px; }
+  #health, #armour { font-size: 17px; font-weight: 700; margin-top: 2px; }
+  #stars { font-size: 26px; letter-spacing: 3px; color: #ffd54a; margin-top: 2px; }
+  #district { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-top: 4px; }
+  #station { font-size: 13px; opacity: .85; margin-top: 2px; }
+  #packages { font-size: 13px; opacity: .85; margin-top: 2px; }
+  #timer { font-size: 18px; font-weight: 800; color: #ffb703; margin-top: 2px; }
+  #mission { top: 14px; left: 50%; transform: translateX(-50%); max-width: 560px;
+    text-align: center; font-size: 16px; font-weight: 700; line-height: 1.35;
+    background: rgba(10,10,18,.55); padding: 8px 16px; border-radius: 8px;
+    border: 1px solid rgba(255,213,74,.45); }
+  #speed { right: 16px; bottom: 16px; font-size: 30px; font-weight: 800; text-align: right; }
+  #speed small { display: block; font-size: 12px; letter-spacing: 3px; opacity: .8; }
+  #minimap { position: fixed; right: 16px; top: 14px; z-index: 5;
+    width: 180px; height: 180px; border: 2px solid rgba(255,255,255,.65);
+    border-radius: 50%; background: #14101c; box-shadow: 0 4px 18px rgba(0,0,0,.6); }
+  #banner { top: 96px; left: 50%; transform: translateX(-50%); font-size: 26px; font-weight: 900;
+    color: #ffd54a; letter-spacing: 1px; opacity: 0; transition: opacity .4s;
+    background: rgba(10,10,18,.6); padding: 10px 22px; border-radius: 10px; white-space: nowrap; }
+  #popups { left: 50%; top: 150px; transform: translateX(-50%); text-align: center; }
+  .cash-pop { font-size: 22px; font-weight: 900; color: #7dff8a; margin-top: 4px;
+    animation: rise 1.8s ease-out forwards; }
+  .cash-pop.bad { color: #ff8080; }
+  @keyframes rise { 0% { opacity: 0; transform: translateY(8px); }
+    15% { opacity: 1; } 100% { opacity: 0; transform: translateY(-26px); } }
+  #vignette { position: fixed; inset: 0; z-index: 4; pointer-events: none; opacity: 0;
+    background: radial-gradient(ellipse at center, transparent 52%, rgba(255,0,0,.55) 100%); }
+  #screen { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; cursor: pointer;
+    background: linear-gradient(180deg, rgba(20,8,30,.12) 0%, rgba(20,8,30,.42) 78%); padding: 20px; }
+  #screen-title { font-size: 64px; font-weight: 900; letter-spacing: 6px; color: #ffd54a;
+    text-shadow: 0 4px 0 #7a2e0e, 0 8px 24px rgba(0,0,0,.8); }
+  #screen-body { max-width: 620px; font-size: 18px; line-height: 1.5; margin-top: 16px;
+    text-shadow: 0 2px 6px rgba(0,0,0,.9); }
+  #screen-hint { margin-top: 26px; font-size: 15px; font-weight: 700; letter-spacing: 1px;
+    color: #ffe9a8; animation: blink 1.6s infinite; }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+  #help { left: 16px; bottom: 14px; font-size: 12px; opacity: .75; line-height: 1.5; }
 </style>
 <script type="importmap">
 { "imports": { "three": "./vendor/three.module.min.js" } }
 </script>
 </head>
 <body>
-<canvas id="game"></canvas>
-<div id="hud">
+<div id="game"></div>
+<div id="vignette"></div>
+<div class="hud" id="top-left">
   <div id="cash">$0</div>
-  <div id="health-wrap"><div id="health"></div></div>
-  <div id="armour-wrap"><div id="armour"></div></div>
+  <div id="health">♥ 100</div>
+  <div id="armour">⛨ 0</div>
   <div id="stars">☆☆☆☆☆</div>
   <div id="district">Marina Plaza</div>
-  <div id="mission">Solmar Bay</div>
-  <div id="speed">On foot</div>
-  <div id="radio">♪ Radio off</div>
+  <div id="station">♪ Radio off</div>
+  <div id="packages">▣ 0/10</div>
+  <div id="timer"></div>
 </div>
+<div class="hud" id="mission">Job 1/6 — Pickup (Rico): Pick up Rico’s package at Marina Plaza</div>
 <canvas id="minimap" width="180" height="180"></canvas>
-<div id="banner"></div>
-<div id="popups"></div>
-<div id="vignette"></div>
+<div class="hud" id="banner"></div>
+<div class="hud" id="popups"></div>
+<div class="hud" id="speed">0 km/h<small>SOLMAR BAY</small></div>
+<div class="hud" id="help">WASD move / drive &nbsp;·&nbsp; Shift run &nbsp;·&nbsp; E steal / exit car<br>
+F punch &nbsp;·&nbsp; R radio &nbsp;·&nbsp; P pause &nbsp;·&nbsp; drag mouse to look</div>
 <div id="screen">
-  <h1 id="screen-title">SOLMAR BAY</h1>
-  <p id="screen-sub">MARA VOSS RETURNS</p>
-  <p id="screen-text">Mara Voss is back in Solmar Bay. Six jobs. One city. One big score.</p>
-  <p id="screen-hint">WASD move / drive &nbsp;·&nbsp; E steal or exit a car &nbsp;·&nbsp; F punch &nbsp;·&nbsp; R radio &nbsp;·&nbsp; Shift run &nbsp;·&nbsp; Mouse drag camera &nbsp;·&nbsp; P pause &nbsp;·&nbsp; Click to start</p>
+  <div id="screen-title">SOLMAR BAY</div>
+  <div id="screen-body">Mara Voss Returns — an open-world crime story. Steal cars, outrun the law, run six jobs and take the Big Score.</div>
+  <div id="screen-hint">Click to start &nbsp;•&nbsp; WASD move / drive &nbsp;•&nbsp; E steal car &nbsp;•&nbsp; F punch &nbsp;•&nbsp; R radio &nbsp;•&nbsp; P pause</div>
 </div>
-<div id="status" aria-live="polite"></div>
 <script type="module" src="./src/main.js"></script>
 </body>
 </html>

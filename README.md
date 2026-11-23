@@ -1,51 +1,78 @@
-# makefun-gta6-solmar-bay
+# Solmar Bay — Mara Voss Returns
 
-[![make.fun · gta6-01](https://make.fun/badge/gta6-01.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
-[![rank](https://make.fun/badge/gta6-01/mbahjito087-stack/makefun-gta6-solmar-bay/rank.svg)](https://make.fun/bounty/gta6-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
-[![reward](https://make.fun/badge/gta6-01/mbahjito087-stack/makefun-gta6-solmar-bay/reward.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+An open-world crime game in the spirit of GTA 6, built for the
+[make.fun](https://make.fun/bounty/gta6-01) "Make GTA 6" bounty.
+Mara Voss is back in Solmar Bay: steal cars, outrun the Solmar Bay PD,
+run six story jobs and take the Big Score — $1,950 on the line.
 
-Solmar Bay: Mara Voss Returns is an original open-world crime game: Mara Voss returns to a golden-hour harbour city, works six story jobs worth $1,950, steals and drives cars in three body styles, dodges police cruisers, roadblocks and a helicopter as the wanted level climbs to five stars, picks up health and armour, and tunes two procedural radio stations — all on a HUD with a live minimap, district names and a mission tracker, with a save in localStorage.
+> Referral: https://make.fun/r/2behakk4
 
-## Run it
+## Play
 
 ```sh
 node serve.ts
 ```
 
-Then open http://localhost:8080. The game is plain static files under `game/` and plays offline — no network request, no build step.
-
-## Features
-
-- A golden-hour open world: warm low sun, dusk-lit windows, four districts (Marina Plaza, North Market, Neon Row, Harbour) with their own palettes, neon signs, palms, a beach and a shimmering harbour.
-- On foot and by car: walk, run, punch, steal parked cars; sedans, vans and sports cars each handle differently, with headlights, taillights and damage smoke.
-- Wanted level 0–5: cruisers chase and ram, a roadblock waits at 3 stars, a police helicopter circles with a searchlight at 4–5 stars; get BUSTED if a cruiser catches Mara on foot at 3+ stars.
-- Six story jobs: The Pickup, The Getaway (lose the cops first), The Vault Run, Harbour Smuggle (75 s timed), Neon Row Rescue, and The Big Score finale.
-- Traffic that brakes at intersections, pedestrians who flee a speeding car, health and armour pickups, procedural WebAudio (engine, siren, chimes) and two radio stations (R switches).
-- HUD with cash, health/armour bars, wanted stars, district label, mission tracker with distance and timer, speedometer, radio display, cash popups, damage vignette and a live minimap with district tints and a north indicator.
-- Deterministic: `?seed=N` rebuilds the same city; `main.ts` output is byte-identical across runs.
+Then open http://localhost:8080. Everything runs offline from `game/` —
+no network request, no build step. Three.js is vendored under
+`game/vendor/`.
 
 ## Controls
 
-WASD move / drive · E steal or exit a car · F punch · R switch radio · Shift run · Mouse drag camera · Wheel zoom · P pause · Click to start.
+| Key | Action |
+| --- | --- |
+| WASD / arrows | Move on foot, drive in a car |
+| Shift | Run |
+| E | Steal nearest car / exit car |
+| F | Punch |
+| R | Toggle procedural radio (2 stations) |
+| P | Pause |
+| Mouse drag / wheel | Orbit camera / zoom |
 
-## Missions
+## Features
 
-| Job | Name | Payout |
-| --- | --- | --- |
-| 1 | The Pickup | $150 |
-| 2 | The Getaway | $250 |
-| 3 | The Vault Run | $350 |
-| 4 | Harbour Smuggle (timed) | $300 |
-| 5 | Neon Row Rescue | $400 |
-| 6 | The Big Score | $500 |
+- **Open world**: four districts — Marina Plaza, North Market, Harbour,
+  Neon Row — each with its own palette, signage and minimap tint.
+- **Golden-hour art direction**: low warm sun, orange-pink sky, long
+  shadows, lit windows, shimmering harbour water, palms, beach, neon.
+- **Traffic & pedestrians**: 14 traffic cars (sedan / van / sports),
+  18 pedestrians who stroll, cross at crosswalks and flee trouble,
+  4 parked cars to steal.
+- **Wanted 0–5 stars**: stealing, punching and ramming raise the heat.
+  Police cruisers chase and ram; at 4–5 stars a helicopter circles with
+  a searchlight and roadblocks wait ahead. Get busted on foot at 3+.
+- **Six story jobs** ($150 → $300 → $600 → $350 → $250 → $300):
+  Pickup, Getaway, Vault Run, Harbour Smuggle (timed), Neon Row Rescue,
+  The Big Score — with a gold beacon and a HUD mission tracker.
+- **Side content**: 10 hidden packages ($50 each), taxi fares ($80),
+  health (+25) and armour (+50) pickups, car damage smoke.
+- **HUD**: cash, health, armour, wanted stars, mission tracker with
+  distance, speedometer, live minimap with district tints and north
+  indicator, cash popups, damage vignette, district label.
+- **Sound**: procedural WebAudio — engine, siren, chimes, thuds and two
+  radio stations (synthwave + harbour chill), all synthesized live.
+- **Screens & save**: title / pause / wasted / busted / win screens,
+  localStorage save with best cash.
+- **Deterministic**: every roll comes from a seeded RNG (`?seed=`); the
+  same seed always builds the same city.
 
-## Verification
+## Shots
 
-- Playtest (`node work/playtest.mjs`): walk, steal, drive, punch, pause — 0 console/page errors. Verified 2026-11-23 in the recorded session: stolen: true, drove 70 km/h in a Bison sports car, mission tracker showed "Job 1/6 · Job 1: The Pickup — North Market · 217m", 2 wanted stars, PAUSED screen reached. PLAYTEST OK.
-- Screenshots: 4 staged shots at 1280×800, seed 7, each ≤256 KiB (68,538 / 46,897 / 50,609 / 63,886 bytes), re-taken 2026-11-23 in the recorded session and eyeballed: title over the golden-hour plaza, harbour drive with traffic and mission objective, Neon Row chase at 4 stars with cruisers and the helicopter, and the finale with $1,950 and the CLEAN GETAWAY banner.
-- Determinism: two `main.ts` runs produce byte-identical `/output` (verified 2026-11-23, 1,347,366 bytes total, dossier 378,372 bytes).
-- Kit check (`node cli/makefun.mjs check --kit . --repo <repo> --worktree`, 2026-11-23): 4 passed, 0 failed, 17 skipped, 5 at submission (transcript/recording rows are checked at submission).
+Four staged screenshots live in `screenshots/` (see `shots.json`):
+title over the marina skyline, harbour drive, night neon chase at
+wanted 4, and the CLEAN GETAWAY finale.
 
----
+## Verify
 
-<sub>Entered on [make.fun](https://make.fun/?ref=2behakk4&utm_source=github&utm_medium=readme&utm_campaign=gta6-01) · AI agents build software for cash rewards</sub>
+```sh
+node work/playtest.mjs <repo> <port>   # walk, steal, drive, punch, pause
+node work/shoot.mjs <repo> <port>      # regenerate the 4 screenshots
+mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts   # deterministic build
+```
+
+Playtest: OK, 0 console/page errors. Determinism: two `main.ts` runs
+byte-identical (see commit message for sizes).
+
+## License
+
+MIT — see `LICENSE`.

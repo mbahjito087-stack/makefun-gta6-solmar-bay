@@ -1,124 +1,198 @@
-// The HUD: cash, health and armour bars, wanted stars, district name,
-// mission tracker with distance and timer, speed, radio station, and a
-// live top-down minimap drawn on a 2D canvas from the same world positions.
-import { MAX_WANTED, WORLD_HALF, DISTRICTS } from './config.js';
+// HUD: cash, health, wanted stars, mission tracker, speedometer, the live
+// minimap, cash popups, damage vignette and the title/pause/wasted/win
+// screens. All DOM, no WebGL — the canvas minimap is the only drawing here.
 
-const DISTRICT_COLORS = Object.fromEntries(DISTRICTS.map((d) => [d.name, d.color]));
+import { WORLD_HALF, MISSIONS } from './config.js';
 
-export function districtColor(name) {
-  return DISTRICT_COLORS[name] ?? '#ffffff';
+function starRow(wanted) {
+  let out = '';
+  for (let i = 0; i < 5; i++) out += i < wanted ? '★' : '☆';
+  return out;
 }
 
-export function createHud() {
-  const el = (id) => document.getElementById(id);
-  const hud = {
-    cash: el('cash'),
-    health: el('health'),
-    armour: el('armour'),
-    stars: el('stars'),
-    district: el('district'),
-    mission: el('mission'),
-    speed: el('speed'),
-    radio: el('radio'),
-    banner: el('banner'),
-    vignette: el('vignette'),
-    popups: el('popups'),
-    map: el('minimap').getContext('2d'),
-    showBanner(text) {
-      this.banner.textContent = text;
-      this.banner.style.opacity = '1';
-      clearTimeout(this._bannerTimer);
-      this._bannerTimer = setTimeout(() => { this.banner.style.opacity = '0'; }, 2600);
-    },
-    cashPopup(text) {
-      const d = document.createElement('div');
-      d.className = 'cash-pop';
-      d.textContent = text;
-      this.popups.appendChild(d);
-      setTimeout(() => d.remove(), 1800);
-    },
-    flashDamage() {
-      this.vignette.style.opacity = '0.85';
-      setTimeout(() => { this.vignette.style.opacity = '0'; }, 220);
-    },
-    update(s) {
-      this.cash.textContent = `$${s.cash}`;
-      this.health.style.width = `${Math.max(0, s.health)}%`;
-      this.health.style.background = s.health > 50 ? '#2ecc71' : s.health > 25 ? '#f39c12' : '#e74c3c';
-      this.armour.style.width = `${Math.max(0, s.armour)}%`;
-      this.stars.textContent = '★'.repeat(s.wanted) + '☆'.repeat(MAX_WANTED - s.wanted);
-      this.district.textContent = s.district;
-      this.district.style.color = s.districtColor;
-      const timer = s.timer > 0 ? ` · ⏱ ${Math.ceil(s.timer)}s` : '';
-      this.mission.textContent = s.missionDone
-        ? 'All jobs done — enjoy Solmar Bay'
-        : `Job ${s.missionIndex + 1}/6 · ${s.missionName} — ${s.objective} · ${Math.round(s.distance)}m${timer}`;
-      this.speed.textContent = s.inCar
-        ? `${Math.round(s.speed * 3.6)} km/h · ${s.carModel} · ${s.carStyle}`
-        : 'On foot';
-      this.radio.textContent = `♪ ${s.station}`;
-    },
-    drawMap(world, clock) {
-      const g = this.map;
-      const S = 180;
-      const px = (v) => ((v + WORLD_HALF) / (WORLD_HALF * 2)) * S;
-      // District tints, one per quadrant, with the sea along the south.
-      g.fillStyle = '#20242e';
-      g.fillRect(0, 0, S, S);
-      g.fillStyle = 'rgba(232, 182, 76, 0.20)';
-      g.fillRect(px(-45), px(-45), px(45) - px(-45), px(45) - px(-45));
-      g.fillStyle = 'rgba(126, 200, 80, 0.16)';
-      g.fillRect(0, 0, S, px(-45));
-      g.fillStyle = 'rgba(255, 95, 162, 0.18)';
-      g.fillRect(px(45), 0, S - px(45), S);
-      g.fillStyle = 'rgba(79, 195, 232, 0.22)';
-      g.fillRect(0, px(45), S, S - px(45));
-      g.fillStyle = '#3a3f46';
-      for (let s = -WORLD_HALF; s <= WORLD_HALF; s += 60) {
-        g.fillRect(px(s) - 3.5, 0, 7, S);
-        g.fillRect(0, px(s) - 3.5, S, 7);
+export class Hud {
+  constructor(doc) {
+    this.doc = doc;
+    this.cashEl = doc.getElementById('cash');
+    this.healthEl = doc.getElementById('health');
+    this.armourEl = doc.getElementById('armour');
+    this.starsEl = doc.getElementById('stars');
+    this.missionEl = doc.getElementById('mission');
+    this.speedEl = doc.getElementById('speed');
+    this.districtEl = doc.getElementById('district');
+    this.stationEl = doc.getElementById('station');
+    this.packagesEl = doc.getElementById('packages');
+    this.timerEl = doc.getElementById('timer');
+    this.bannerEl = doc.getElementById('banner');
+    this.vignetteEl = doc.getElementById('vignette');
+    this.popupLayer = doc.getElementById('popups');
+    this.map = doc.getElementById('minimap');
+    this.mapCtx = this.map ? this.map.getContext('2d') : null;
+    this.screenEl = doc.getElementById('screen');
+    this.screenTitleEl = doc.getElementById('screen-title');
+    this.screenBodyEl = doc.getElementById('screen-body');
+    this.screenHintEl = doc.getElementById('screen-hint');
+    this.lastCash = 0;
+  }
+
+  showScreen(kind, data) {
+    // kind: title | paused | wasted | busted | win | none
+    if (!this.screenEl) return;
+    if (kind === 'none') {
+      this.screenEl.style.display = 'none';
+      return;
+    }
+    this.screenEl.style.display = 'flex';
+    const d = data || {};
+    if (kind === 'title') {
+      this.screenTitleEl.textContent = 'SOLMAR BAY';
+      this.screenBodyEl.textContent = 'Mara Voss Returns — an open-world crime story. Steal cars, outrun the law, run six jobs and take the Big Score.';
+      this.screenHintEl.textContent = 'Click to start  •  WASD move / drive  •  E steal car  •  F punch  •  R radio  •  P pause';
+    } else if (kind === 'paused') {
+      this.screenTitleEl.textContent = 'PAUSED';
+      this.screenBodyEl.textContent = 'Solmar Bay waits. Your cash is saved.';
+      this.screenHintEl.textContent = 'Press P or click to resume';
+    } else if (kind === 'wasted') {
+      this.screenTitleEl.textContent = 'WASTED';
+      this.screenBodyEl.textContent = 'Mara went down in Solmar Bay. Best cash $' + (d.best || 0) + '.';
+      this.screenHintEl.textContent = 'Click to try again';
+    } else if (kind === 'busted') {
+      this.screenTitleEl.textContent = 'BUSTED';
+      this.screenBodyEl.textContent = 'The Solmar Bay PD took Mara in. Best cash $' + (d.best || 0) + '.';
+      this.screenHintEl.textContent = 'Click to try again';
+    } else if (kind === 'win') {
+      this.screenTitleEl.textContent = 'CLEAN GETAWAY';
+      this.screenBodyEl.textContent = 'All six jobs done. Total take $' + (d.cash || 0) + ' — Mara Voss owns Solmar Bay.';
+      this.screenHintEl.textContent = 'Click to keep cruising the city';
+    }
+  }
+
+  popup(text, good) {
+    if (!this.popupLayer) return;
+    const el = this.doc.createElement('div');
+    el.className = 'cash-pop' + (good === false ? ' bad' : '');
+    el.textContent = text;
+    this.popupLayer.appendChild(el);
+    window.setTimeout(() => el.remove(), 1800);
+  }
+
+  flashBanner(text, ms) {
+    if (!this.bannerEl) return;
+    this.bannerEl.textContent = text;
+    this.bannerEl.style.opacity = '1';
+    window.clearTimeout(this.bannerEl._t);
+    this.bannerEl._t = window.setTimeout(() => { this.bannerEl.style.opacity = '0'; }, ms || 2400);
+  }
+
+  setVignette(amount) {
+    if (!this.vignetteEl) return;
+    this.vignetteEl.style.opacity = String(Math.max(0, Math.min(0.85, amount)));
+  }
+
+  update(state) {
+    if (this.cashEl) this.cashEl.textContent = '$' + state.cash;
+    if (this.healthEl) {
+      this.healthEl.textContent = '♥ ' + Math.max(0, Math.round(state.health));
+      this.healthEl.style.color = state.health < 30 ? '#ff5252' : '#7dff8a';
+    }
+    if (this.armourEl) this.armourEl.textContent = '⛨ ' + Math.round(state.armour);
+    if (this.starsEl) {
+      this.starsEl.textContent = starRow(state.wanted);
+      this.starsEl.style.color = state.wanted >= 4 ? '#ff5252' : '#ffd54a';
+    }
+    if (this.speedEl) this.speedEl.textContent = Math.round(state.speedKmh) + ' km/h';
+    if (this.districtEl) {
+      this.districtEl.textContent = state.district.name;
+      this.districtEl.style.color = state.district.color;
+    }
+    if (this.stationEl) this.stationEl.textContent = '♪ ' + state.station;
+    if (this.packagesEl) this.packagesEl.textContent = '▣ ' + state.packages + '/' + state.packageTotal;
+    if (this.timerEl) {
+      this.timerEl.textContent = state.timerLeft > 0 ? '⏱ ' + Math.ceil(state.timerLeft) + 's' : '';
+    }
+    if (this.missionEl) {
+      if (state.missionDone) {
+        this.missionEl.textContent = 'All jobs done — free roam. Best $' + state.best;
+      } else {
+        const job = MISSIONS[state.missionIndex];
+        const dist = Math.round(state.missionDistance);
+        this.missionEl.textContent = 'Job ' + (state.missionIndex + 1) + '/6 — ' + job.name + ' (' + job.giver + '): ' + state.missionText + '  •  ' + dist + 'm';
       }
-      // Pulsing gold target.
-      const pulse = 4 + Math.sin(clock * 3) * 1.5;
-      g.fillStyle = '#ffd700';
-      g.beginPath();
-      g.arc(px(world.target.x), px(world.target.z), pulse, 0, 7);
-      g.fill();
-      g.strokeStyle = '#ffd700';
-      g.beginPath();
-      g.arc(px(world.target.x), px(world.target.z), pulse + 4, 0, 7);
-      g.stroke();
-      for (const c of world.cars) {
-        g.fillStyle = '#9aa5b1';
-        g.fillRect(px(c.x) - 1, px(c.z) - 1, 3, 3);
-      }
-      for (const p of world.police) {
-        g.fillStyle = '#ff3333';
-        g.fillRect(px(p.x) - 2, px(p.z) - 2, 4, 4);
-      }
-      if (world.heli) {
-        g.fillStyle = '#ffe14d';
-        g.beginPath();
-        g.arc(px(world.heli.x), px(world.heli.z), 4, 0, 7);
-        g.fill();
-      }
-      // Player arrow, rotated to the camera heading.
-      g.fillStyle = '#ffffff';
-      g.save();
-      g.translate(px(world.player.x), px(world.player.z));
-      g.rotate(world.player.angle);
-      g.beginPath();
-      g.moveTo(0, -6);
-      g.lineTo(4, 5);
-      g.lineTo(-4, 5);
-      g.closePath();
-      g.fill();
-      g.restore();
-      // North indicator.
-      g.fillStyle = '#ffffff';
-      g.font = 'bold 11px system-ui, sans-serif';
-      g.fillText('N', 4, 13);
-    },
-  };
-  return hud;
+    }
+  }
+
+  drawMinimap(world) {
+    const ctx = this.mapCtx;
+    if (!ctx || !world) return;
+    const S = 180;
+    const half = WORLD_HALF + 14;
+    const toMap = (x, z) => [((x + half) / (half * 2)) * S, ((z + half) / (half * 2)) * S];
+    ctx.clearRect(0, 0, S, S);
+    // District tints.
+    ctx.fillStyle = 'rgba(46,196,182,0.30)';
+    ctx.fillRect((S * (55 + half)) / (half * 2), 0, S, S);
+    ctx.fillStyle = 'rgba(255,46,136,0.30)';
+    ctx.fillRect(0, 0, (S * (-55 + half)) / (half * 2), S);
+    ctx.fillStyle = 'rgba(255,183,3,0.25)';
+    ctx.fillRect(0, 0, S, (S * (-55 + half)) / (half * 2));
+    ctx.fillStyle = '#101018';
+    ctx.fillRect(0, 0, S, 3);
+    // Roads.
+    ctx.strokeStyle = 'rgba(200,200,220,0.55)';
+    ctx.lineWidth = 2;
+    for (const line of [-90, -60, -30, 0, 30, 60, 90]) {
+      const [ax] = toMap(line, 0);
+      const [, bz] = toMap(0, line);
+      ctx.beginPath(); ctx.moveTo(ax, 0); ctx.lineTo(ax, S); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, bz); ctx.lineTo(S, bz); ctx.stroke();
+    }
+    // Harbour water.
+    ctx.fillStyle = '#1b6f8f';
+    ctx.fillRect((S * (100 + half)) / (half * 2), 0, S, S);
+    // Packages.
+    ctx.fillStyle = '#7dff8a';
+    for (const p of world.packages || []) {
+      if (p.taken) continue;
+      const [px, py] = toMap(p.x, p.z);
+      ctx.fillRect(px - 2, py - 2, 4, 4);
+    }
+    // Mission beacon with a gold pulse.
+    if (world.beacon) {
+      const pulse = 3 + Math.sin(world.time * 4) * 1.5;
+      const [bx, by] = toMap(world.beacon.x, world.beacon.z);
+      ctx.fillStyle = '#ffd54a';
+      ctx.beginPath(); ctx.arc(bx, by, pulse + 3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#7a5200';
+      ctx.beginPath(); ctx.arc(bx, by, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+    // Police cruisers.
+    ctx.fillStyle = '#ff5252';
+    for (const c of world.police || []) {
+      const [cx, cy] = toMap(c.x, c.z);
+      ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2); ctx.fill();
+    }
+    // Helicopter.
+    if (world.heli) {
+      const [hx, hy] = toMap(world.heli.x, world.heli.z);
+      ctx.strokeStyle = '#ff5252';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(hx, hy, 6, 0, Math.PI * 2); ctx.stroke();
+    }
+    // Player arrow.
+    const [px, py] = toMap(world.player.x, world.player.z);
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(world.player.heading);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(0, -6); ctx.lineTo(4.5, 5); ctx.lineTo(-4.5, 5); ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    // North indicator.
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillText('N', S - 16, 16);
+    ctx.strokeStyle = '#ffffff';
+    ctx.beginPath(); ctx.moveTo(S - 11, 20); ctx.lineTo(S - 11, 30); ctx.stroke();
+  }
 }
